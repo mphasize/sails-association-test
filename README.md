@@ -1,4 +1,4 @@
-# Bug demo for Many-to-Many association in Sails.js v.10
+# Bug demo for .update() Many-to-Many Through association in Sails.js v.10
 
 This example defines 3 models: User, Workspace and Membership.
 The Membership model is used to handle the many-to-many associations between Users and Workspaces and add custom attributes to each association.
@@ -6,34 +6,27 @@ The Membership model is used to handle the many-to-many associations between Use
 
 ### How to produce the error
 
-Not sure if this is a bug or my incomplete understanding of Sails.js, but when you run this demonstration and create a user like this:
+First create a few users and a workspace, then try to update the relationship like this
 
-    POST /user
+
+    POST /workspace/1
     
     {
-      "firstname" : "John",
-      "lastname"  : "Doe",
-      "email"     : "mail@example.com",
-      "password"  : "p4ssw0rd",
-      "workspaces": []
+      "members": [1,3,4]
     }
 
-Sails (or Waterline) will throw an error:
+Waterline will throw a WLError:
 
-    Error: Unknown rule: through
-    at Object.matchRule (/usr/local/share/npm/lib/node_modules/sails/node_modules/anchor/lib/match/matchRule.js:37:11)
+    { type: 'insert',
+    collection: 'membership',
+    criteria: { user: 1, undefined: 1 },
+    values: { user: 1, undefined: 1 },
+    err: [Error: Trying to '.add()' an instance which already exists!] }
     
-@particlebanana says that Sails should never even get to validate the `through` property as it should already be parsed out by `waterline-schema`, see discussion here: https://github.com/balderdashy/waterline/pull/444
+Debugging the app reveals an error in `waterline/model/lib/associationMethods/add.js` in Line 289 the variable `attribute` has no property `onKey` therefore the criteria object gets assigned **undefined**.
 
-If I add `through` to the ignored keywords in *waterline/core/validations.js* the error is not thrown and everything works just fine. If I create a workspace first and send a value for workspaces the associations are created.
+[PR #507](https://github.com/balderdashy/waterline/pull/507) fixes this issue.
 
-	POST /user
-    
-    {
-      "firstname" : "John",
-      "lastname"  : "Doe",
-      "email"     : "mail@example.com",
-      "password"  : "p4ssw0rd",
-      "workspaces": [1]
-    }
-    
+### Note
+
+While trying to reproduce the error, this project was originally using Waterline RC12 – and working. There seems to be a regression between RC12 and RC15 that introduces this error.
