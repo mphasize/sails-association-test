@@ -1,10 +1,10 @@
-# Example for Many-to-Many association in Sails.js v.10
+# Bug demo for Many-to-Many association in Sails.js v.10
 
 This example defines 3 models: User, Workspace and Membership.
 The Membership model is used to handle the many-to-many associations between Users and Workspaces and add custom attributes to each association.
 
 
-### Demo of Bug
+### How to produce the error
 
 Not sure if this is a bug or my incomplete understanding of Sails.js, but when you run this demonstration and create a user like this:
 
